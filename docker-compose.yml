@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  tuniu-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tuniu-mcp:latest
+    container_name: tuniu-mcp
+    volumes:
+      - ${HOME}/.tuniu-mcp:/home/tuniu/.tuniu-mcp:ro
+    environment:
+      - TUNIU_API_KEY=${TUNIU_API_KEY:-}
+      - MCP_PROFILE=${MCP_PROFILE:-production}
+      - MCP_TIMEOUT=${MCP_TIMEOUT:-30}
+    command: ["help"]
+
+  tuniu-cli-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: tuniu-mcp:dev
+    container_name: tuniu-mcp-dev
+    working_dir: /app
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ${HOME}/.tuniu-mcp:/home/tuniu/.tuniu-mcp:ro
+    environment:
+      - TUNIU_API_KEY=${TUNIU_API_KEY:-}
+      - MCP_PROFILE=${MCP_PROFILE:-development}
+      - MCP_TIMEOUT=${MCP_TIMEOUT:-60}
+    command: ["npx", "tsx", "src/index.ts", "help"]
+
+networks:
+  default:
+    name: tuniu-network

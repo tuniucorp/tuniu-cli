@@ -1,0 +1,29 @@
+# MCP-to-CLI Development Dockerfile
+# For local development with mounted source code
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install development dependencies
+COPY package*.json ./
+RUN npm ci
+
+COPY tsconfig.json tsup.config.ts ./
+COPY src/ src/
+COPY tests/ tests/
+
+# Create non-root user
+RUN addgroup -g 1000 tuniu && \
+    adduser -u 1000 -G tuniu -s /bin/sh -D tuniu
+
+# Create config directory
+RUN mkdir -p /home/tuniu/.tuniu-mcp && chown -R tuniu:tuniu /home/tuniu/.tuniu-mcp
+
+# Switch to non-root user
+USER tuniu
+
+ENV MCP_CONFIG_PATH=/home/tuniu/.tuniu-mcp/config.json
+
+# Default command
+CMD ["npx", "tsx", "src/index.ts", "help"]

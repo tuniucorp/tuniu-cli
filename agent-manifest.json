@@ -1,0 +1,61 @@
+{
+  "$schema": "https://example.com/tuniu-cli-agent-manifest.schema.json",
+  "name": "tuniu-cli",
+  "version": "1.0.0",
+  "description": "途牛 MCP CLI - 企业开放平台 MCP 服务命令行工具，供 Agent 通过 Shell 调用门票、酒店、机票、火车票、邮轮、度假产品等服务",
+  "cli": {
+    "command": "tuniu",
+    "schemaCommand": "tuniu schema --output json",
+    "outputFormat": "json"
+  },
+  "servers": {
+    "ticket": {
+      "description": "门票服务",
+      "intentKeywords": ["门票", "景点", "景区", "游玩", "订票"]
+    },
+    "hotel": {
+      "description": "酒店服务",
+      "intentKeywords": ["酒店", "住宿", "宾馆", "订房", "入住"]
+    },
+    "flight": {
+      "description": "机票服务",
+      "intentKeywords": ["机票", "航班", "飞机", "飞行"]
+    },
+    "train": {
+      "description": "火车票服务",
+      "intentKeywords": ["火车票", "火车", "高铁", "动车", "车次"]
+    },
+    "cruise": {
+      "description": "邮轮服务",
+      "intentKeywords": ["邮轮", "游轮", "邮轮旅游", "船票", "邮轮预订"]
+    },
+    "holiday": {
+      "description": "度假产品服务",
+      "intentKeywords": ["度假", "跟团", "自助游", "自驾游", "旅游产品", "当地游", "线路", "途牛度假"]
+    }
+  },
+  "intentToTool": {
+    "门票查询": { "server": "ticket", "tool": "query_cheapest_tickets", "requiredArgs": ["scenic_name"] },
+    "门票下单": { "server": "ticket", "tool": "create_ticket_order", "requiredArgs": ["productId", "resId"] },
+    "酒店搜索": { "server": "hotel", "tool": "tuniu_hotel_search", "requiredArgs": ["cityName", "checkIn", "checkOut"] },
+    "机票搜索": { "server": "flight", "tool": "searchLowestPriceFlight", "requiredArgs": ["departureCityName", "arrivalCityName", "departureDate"] },
+    "火车票搜索": { "server": "train", "tool": "searchLowestPriceTrain", "requiredArgs": ["departureCityName", "arrivalCityName", "departureDate"] },
+    "邮轮搜索": { "server": "cruise", "tool": "searchCruiseList", "requiredArgs": ["departsDateBegin", "departsDateEnd"] },
+    "度假产品搜索": { "server": "holiday", "tool": "searchHolidayList", "requiredArgs": ["destinationName"] }
+  },
+  "exitCodes": {
+    "0": { "meaning": "成功", "action": "解析 stdout JSON" },
+    "101": { "meaning": "连接失败", "action": "重试或检查网络" },
+    "102": { "meaning": "工具不存在", "action": "运行 tuniu list <server> 检查工具名" },
+    "103": { "meaning": "参数错误", "action": "运行 tuniu help <server> <tool> 查看参数" },
+    "104": { "meaning": "认证失败", "action": "检查 API Key" },
+    "105": { "meaning": "超时", "action": "增加 -t 超时或重试" },
+    "106": { "meaning": "服务器错误", "action": "联系服务提供方" },
+    "107": { "meaning": "配置错误", "action": "运行 tuniu config show" },
+    "108": { "meaning": "未配置 API Key", "action": "设置 TUNIU_API_KEY 环境变量" },
+    "199": { "meaning": "未知错误", "action": "使用 --detail 查看详情" }
+  },
+  "env": {
+    "TUNIU_API_KEY": "API 认证密钥（必填，调用 MCP 服务时）"
+  }
+}

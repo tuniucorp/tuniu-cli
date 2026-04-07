@@ -1,0 +1,83 @@
+{
+  "defaultProfile": "production",
+  "profiles": {
+    "production": {
+      "servers": {
+        "ticket": {
+          "url": "https://openapi.tuniu.cn/mcp/ticket",
+          "description": "门票服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "hotel": {
+          "url": "https://openapi.tuniu.cn/mcp/hotel",
+          "description": "酒店服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "flight": {
+          "url": "https://openapi.tuniu.cn/mcp/flight",
+          "description": "机票服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "train": {
+          "url": "https://openapi.tuniu.cn/mcp/train",
+          "description": "火车票服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "cruise": {
+          "url": "https://openapi.tuniu.cn/mcp/cruise",
+          "description": "邮轮服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "holiday": {
+          "url": "https://openapi.tuniu.cn/mcp/holiday",
+          "description": "度假产品服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        }
+      },
+      "discovery": {
+        "enabled": true,
+        "url": "https://openapi.tuniu.cn/tour/mcp/discovery",
+        "refreshInterval": 86400
+      },
+      "timeout": 30
+    },
+    "development": {
+      "servers": {
+        "ticket": {
+          "url": "https://openapi-p.tuniu.cn/mcp/ticket",
+          "description": "门票服务（开发环境）"
+        },
+        "hotel": {
+          "url": "https://openapi-p.tuniu.cn/mcp/hotel",
+          "description": "酒店服务（开发环境）"
+        },
+        "flight": {
+          "url": "https://openapi-p.tuniu.cn/mcp/flight",
+          "description": "机票服务",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "train": {
+          "url": "https://openapi-p.tuniu.cn/mcp/train",
+          "description": "火车票服务（开发环境）",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "cruise": {
+          "url": "https://openapi-p.tuniu.cn/mcp/cruise",
+          "description": "邮轮服务（开发环境）",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        },
+        "holiday": {
+          "url": "https://openapi-p.tuniu.cn/mcp/holiday",
+          "description": "度假产品服务（开发环境）",
+          "headers": {"apiKey": "${TUNIU_API_KEY}"}
+        }
+      },
+      "discovery": {
+        "enabled": true,
+        "url": "https://openapi-p.tuniu.cn/tour/mcp/discovery",
+        "refreshInterval": 300
+      },
+      "timeout": 60
+    }
+  }
+}
