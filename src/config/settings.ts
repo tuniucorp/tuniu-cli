@@ -5,6 +5,10 @@ import { z } from 'zod';
 import { ApiKeyRequiredError, ConfigError } from '../errors/index.js';
 import type { DiscoveryConfig, ServiceInfo } from '../discovery/types.js';
 import { DiscoveryClient } from '../discovery/client.js';
+import {
+  SKILL_DOWNLOAD_URL_DEVELOPMENT,
+  SKILL_DOWNLOAD_URL_PRODUCTION,
+} from '../skill/downloader.js';
 
 let hasWarnedInvalidDiscoveryEnabledEnv = false;
 
@@ -245,6 +249,16 @@ export class ConfigManager {
    */
   getDiscoveryConfig(): DiscoveryConfig | undefined {
     return this.profileConfig.discovery;
+  }
+
+  /**
+   * Skill zip 下载地址
+   * `development` profile 使用预发文档站，其余 profile 使用生产文档站。
+   */
+  getSkillDownloadUrl(): string {
+    return this.currentProfile === 'development'
+      ? SKILL_DOWNLOAD_URL_DEVELOPMENT
+      : SKILL_DOWNLOAD_URL_PRODUCTION;
   }
 
   /**

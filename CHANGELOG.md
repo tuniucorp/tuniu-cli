@@ -4,6 +4,27 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [1.0.6] - 2026-04-09
+
+### Added
+- 新增 `tuniu skill version` 命令：遍历所有内置 Agent 目录，查看已安装的 skill 版本信息；检测到多个安装时列出全部，版本不一致时提示更新
+- 新增 skill 动态下载能力：`tuniu skill install` 优先从途牛开放平台下载最新 skill，失败时自动 fallback 到内置文件
+
+### Changed
+- 优化 `tuniu skill install` 输出：简化提示信息，详细使用说明移至 `--help`
+- 度假服务（`holiday`）示例参数更新：`destinationName` 改为 `keyWord`
+
+## [1.0.5] - 2026-04-08
+
+### Changed
+- `SKILL.md` 内置版本升至 `1.0.1`
+- 优化度假服务（`holiday`）参数说明：`searchHolidayList` 无单一必填参数，建议传 `keyWord` 或结构化条件，出游日期需成对传入
+- 邮轮服务（`cruise`）补充三条 LLM 行为约束：
+  - 筛选说明：仅有日期时直接查询，不为补齐可选条件而额外追问
+  - 翻页说明：翻页时保持筛选条件不变，仅更新 `pageNum`
+  - 列表展示：`data.rows` 需逐条展示，不应只列少量样例
+- `getCruiseProductDetail` 参数规则强化：所有参数须来自同一条 `searchCruiseList` 返回记录，新增团期规则说明（需展示全部可售团期）
+
 ## [1.0.4] - 2026-04-03
 
 ### Added

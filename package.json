@@ -1,6 +1,6 @@
 {
   "name": "tuniu-cli",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Tuniu MCP CLI tool for calling enterprise MCP services",
   "type": "module",
   "bin": {
@@ -55,17 +55,22 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "overrides": {
+    "vite": "^7.3.2"
+  },
   "dependencies": {
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
     "commander": "^13.1.0",
     "js-yaml": "^4.1.1",
+    "unzipper": "^0.12.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.5.0",
+    "@types/unzipper": "^0.10.11",
     "eslint": "^9.39.4",
     "tsup": "^8.3.0",
     "tsx": "^4.20.5",

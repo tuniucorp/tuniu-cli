@@ -7,6 +7,10 @@ import {
   expandEnvVars,
 } from '../src/config/index.js';
 import { ApiKeyRequiredError, ConfigError } from '../src/errors/index.js';
+import {
+  SKILL_DOWNLOAD_URL_DEVELOPMENT,
+  SKILL_DOWNLOAD_URL_PRODUCTION,
+} from '../src/skill/downloader.js';
 
 describe('expandEnvVars', () => {
   it('expands simple var', () => {
@@ -270,5 +274,17 @@ describe('ensureApiKey', () => {
     writeApiKeyConfig(filePath, 'Authorization');
     const manager = new ConfigManager(filePath);
     expect(() => manager.ensureApiKey(['ticket'])).not.toThrow();
+  });
+
+  describe('getSkillDownloadUrl', () => {
+    it('uses pre-release URL for development profile', () => {
+      const manager = new ConfigManager(undefined, 'development');
+      expect(manager.getSkillDownloadUrl()).toBe(SKILL_DOWNLOAD_URL_DEVELOPMENT);
+    });
+
+    it('uses production URL for production profile', () => {
+      const manager = new ConfigManager(undefined, 'production');
+      expect(manager.getSkillDownloadUrl()).toBe(SKILL_DOWNLOAD_URL_PRODUCTION);
+    });
   });
 });

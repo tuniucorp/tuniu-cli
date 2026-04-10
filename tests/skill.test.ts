@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SKILL_NAME, SkillInstaller } from '../src/commands/skill.js';
+import { skillContentSha256 } from '../src/skill/skill-meta.js';
 
 describe('SkillInstaller', () => {
   let tmpDir: string;
@@ -133,5 +134,25 @@ describe('SkillInstaller', () => {
     expect(targets).toHaveLength(1);
     expect(fs.existsSync(targets[0].skillFile)).toBe(true);
     expect(fs.readFileSync(targets[0].skillFile, 'utf8')).toContain('name: tuniu-cli');
+  });
+
+  it('installBuiltin writes _meta.json aligned with SKILL content', () => {
+    const targets = installer.installBuiltin({ agents: 'cursor' });
+    expect(targets).toHaveLength(1);
+    const skillDir = path.join(tmpDir, '.cursor', 'skills', SKILL_NAME);
+    const metaPath = path.join(skillDir, '_meta.json');
+    expect(fs.existsSync(metaPath)).toBe(true);
+    const skillText = fs.readFileSync(targets[0].skillFile, 'utf8');
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) as {
+      version: string;
+      sha256: string;
+      minCliVersion: string;
+      source: string;
+      cliVersion: string;
+    };
+    expect(meta.source).toBe('builtin');
+    expect(meta.sha256).toBe(skillContentSha256(skillText));
+    expect(meta.version.length).toBeGreaterThan(0);
+    expect(meta.minCliVersion.length).toBeGreaterThan(0);
   });
 });

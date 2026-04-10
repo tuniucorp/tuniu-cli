@@ -2,6 +2,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  SkillDownloader,
+  NetworkError,
+  HttpResponseError,
+  type SkillMeta,
+} from '../skill/downloader.js';
+import { buildBuiltinLocalMeta, nowInBeijingISOString } from '../skill/skill-meta.js';
+import { ConfigManager } from '../config/index.js';
+import { CLI_VERSION } from '../version.js';
 
 export const SKILL_NAME = 'tuniu-cli';
 
@@ -24,6 +33,16 @@ export interface SkillInstallTarget {
   agent: ResolvedAgent | 'custom';
   skillDir: string;
   skillFile: string;
+}
+
+/**
+ * 本地安装后的元数据结构
+ */
+export interface LocalMeta extends SkillMeta {
+  source: 'builtin' | 'download';
+  downloadUrl?: string;
+  installedAt: string;
+  cliVersion: string;
 }
 
 function getSkillSourcePath(): string {
@@ -189,6 +208,84 @@ export class SkillInstaller {
       return true;
     });
   }
+
+  /**
+   * 从远程下载并安装 skill
+   */
+  async installFromDownload(options: {
+    downloadUrl: string;
+    agent?: string;
+    agents?: string;
+    customDir?: string;
+    force?: boolean;
+  }): Promise<{ targets: SkillInstallTarget[]; meta: SkillMeta }> {
+    const downloader = new SkillDownloader(options.downloadUrl);
+    const targets = this.resolveInstallTargets(options);
+
+    if (targets.length === 0) {
+      throw new Error('未指定安装目标');
+    }
+
+    // 下载到第一个目标目录
+    const primaryTarget = targets[0];
+    const { meta } = await downloader.downloadAndExtract(primaryTarget.skillDir);
+
+    // 构建本地元数据
+    const localMeta: LocalMeta = {
+      ...meta,
+      source: 'download',
+      downloadUrl: options.downloadUrl,
+      installedAt: nowInBeijingISOString(),
+      cliVersion: CLI_VERSION,
+    };
+
+    // 写入元数据到第一个目标目录
+    const primaryMetaPath = path.join(primaryTarget.skillDir, '_meta.json');
+    fs.writeFileSync(primaryMetaPath, JSON.stringify(localMeta, null, 2) + '\n');
+
+    // 复制 SKILL.md 和元数据到其他目标目录
+    const skillFile = path.join(primaryTarget.skillDir, 'SKILL.md');
+    for (const target of targets.slice(1)) {
+      fs.mkdirSync(target.skillDir, { recursive: true });
+      if (fs.existsSync(skillFile)) {
+        fs.copyFileSync(skillFile, target.skillFile);
+      }
+      // 写入元数据
+      const targetMetaPath = path.join(target.skillDir, '_meta.json');
+      fs.writeFileSync(targetMetaPath, JSON.stringify(localMeta, null, 2) + '\n');
+    }
+
+    return { targets, meta };
+  }
+
+  /**
+   * 使用内置文件安装（fallback）
+   */
+  installBuiltin(options?: {
+    agent?: string;
+    agents?: string;
+    customDir?: string;
+    force?: boolean;
+  }): SkillInstallTarget[] {
+    const source = this.getSkillSourcePath();
+
+    if (!fs.existsSync(source)) {
+      throw new Error(`未找到内置 Skill 文件: ${source}`);
+    }
+
+    const targets = this.resolveInstallTargets(options);
+    const skillContent = fs.readFileSync(source, 'utf8');
+    const localMeta: LocalMeta = buildBuiltinLocalMeta(skillContent, CLI_VERSION);
+
+    for (const target of targets) {
+      fs.mkdirSync(target.skillDir, { recursive: true });
+      fs.copyFileSync(source, target.skillFile);
+      const metaPath = path.join(target.skillDir, '_meta.json');
+      fs.writeFileSync(metaPath, JSON.stringify(localMeta, null, 2) + '\n');
+    }
+
+    return targets;
+  }
 }
 
 export async function executeSkillInstall(options?: {
@@ -196,43 +293,73 @@ export async function executeSkillInstall(options?: {
   agents?: string;
   customDir?: string;
   force?: boolean;
+  configManager?: ConfigManager;
 }): Promise<number> {
   const installer = new SkillInstaller();
+  const configManager = options?.configManager ?? new ConfigManager();
+  const downloadUrl = configManager.getSkillDownloadUrl();
+  if (process.env.TUNIU_CLI_DEBUG === '1') {
+    console.error(`[DEBUG] skill 下载地址: ${downloadUrl}`);
+  }
 
+  // 1. 尝试从远程下载最新 skill
   try {
-    const targets = installer.install({
+    const { targets, meta } = await installer.installFromDownload({
+      downloadUrl,
       agent: options?.agent,
       agents: options?.agents,
       customDir: options?.customDir,
       force: options?.force,
     });
 
-    console.log('✓ Skill 安装完成');
+    console.log('✓ Skill 安装完成（来源: 远程下载）');
+    if (meta.version) {
+      console.log(`  版本: ${meta.version}`);
+    }
     console.log('');
     console.log('已写入以下目录:');
     for (const target of targets) {
       console.log(`- [${target.agent}] ${target.skillFile}`);
     }
-
-    console.log('');
-    console.log('说明:');
-    console.log(
-      '- 若通过 npm 全局安装（npm install -g tuniu-cli@latest），通常会在 postinstall 阶段自动检测并注册 skill。',
-    );
-    console.log('- 若通过 npx/源码方式使用，或需手动更新/定向安装，请显式执行本命令。');
-    console.log('- 如需安装到其他目录，可使用: tuniu skill install --dir <path>');
-    console.log(
-      '- 内置 Agent: agents,claude,cursor,qoder,codex,opencode,openclaw,copaw',
-    );
-    console.log(
-      '- 如需只安装到指定 Agent，可使用: tuniu skill install --agent cursor,claude 或 tuniu skill install cursor',
-    );
-    console.log(
-      '- 如需安装到全部内置 Agent，可使用: tuniu skill install --agent all',
-    );
     return 0;
   } catch (error) {
-    console.error(`错误: ${error instanceof Error ? error.message : String(error)}`);
-    return 1;
+    // 2. 下载失败，根据错误类型提示用户
+    if (error instanceof NetworkError) {
+      console.warn('⚠ 网络异常，无法连接到下载服务器');
+      console.log('  请检查网络连接后重试');
+    } else if (error instanceof HttpResponseError) {
+      console.warn(`⚠ 接口响应失败: HTTP ${error.statusCode}`);
+      console.log('  如需最新 skill，可访问途牛开放平台手动下载:');
+      console.log('  https://open.tuniu.com/mcp/');
+    } else {
+      console.warn(`⚠ 下载失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    console.log('');
+    console.log('  使用内置 skill 安装...');
+
+    // 3. Fallback 到内置文件
+    try {
+      const targets = installer.installBuiltin({
+        agent: options?.agent,
+        agents: options?.agents,
+        customDir: options?.customDir,
+        force: options?.force,
+      });
+
+      console.log('');
+      console.log('✓ Skill 安装完成（来源: 内置文件）');
+      console.log('');
+      console.log('已写入以下目录:');
+      for (const target of targets) {
+        console.log(`- [${target.agent}] ${target.skillFile}`);
+      }
+      console.log('');
+      console.log('可稍后重试更新: tuniu skill install');
+      return 0;
+    } catch (fallbackError) {
+      console.error(`错误: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+      return 1;
+    }
   }
 }

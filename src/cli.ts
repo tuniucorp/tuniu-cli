@@ -16,6 +16,7 @@ import {
   executeSchema,
   executeSkillInstall,
 } from './commands/index.js';
+import { executeSkillVersion } from './skill/index.js';
 import { McpCliError, handleError } from './errors/index.js';
 import { VERSION } from './version.js';
 
@@ -172,18 +173,45 @@ function createProgram(): Command {
 
   skill
     .command('install')
-    .description('安装 tuniu-cli Skill（默认安装到 ~/.agents/skills/tuniu-cli/）')
-    .argument('[agent]', '目标 Agent：agents,claude,cursor,qoder,codex,opencode,openclaw,copaw')
+    .description(`安装 tuniu-cli Skill（默认安装到 ~/.agents/skills/tuniu-cli/）
+
+说明:
+  - 优先从途牛开放平台下载最新 skill，失败则使用内置文件
+  - 若通过 npm 全局安装，通常会在 postinstall 阶段自动安装
+  - 若通过 npx/源码方式使用，或需手动更新，请显式执行本命令
+
+支持的 Agent: agents, claude, cursor, qoder, codex, opencode, openclaw, copaw
+
+示例:
+  tuniu skill install                    # 默认安装到 ~/.agents/skills/
+  tuniu skill install cursor             # 安装到指定 Agent
+  tuniu skill install --agent cursor,claude  # 安装到多个 Agent
+  tuniu skill install --agent all        # 安装到全部 Agent
+  tuniu skill install --dir ~/custom     # 安装到自定义目录
+  tuniu skill install -p development     # 使用预发文档站下载 zip`)
+    .argument('[agent]', '目标 Agent')
     .option('-a, --agent <names>', '多个 Agent（逗号分隔）或 all')
+    .option('-p, --profile <name>', '环境配置（决定 skill zip 下载地址，与 call/list 等一致）')
     .option('--dir <path>', '额外安装到指定 skills 根目录')
     .option('-f, --force', '覆盖已存在的 Skill 文件', true)
     .action(async (agent, cmdOpts) => {
+      const globalOpts = program.opts();
+      const configManager = buildConfigManager(globalOpts, cmdOpts.profile);
       const exitCode = await executeSkillInstall({
         agent,
         agents: cmdOpts.agent,
         customDir: cmdOpts.dir,
         force: cmdOpts.force,
+        configManager,
       });
+      process.exit(exitCode);
+    });
+
+  skill
+    .command('version')
+    .description('显示已安装的 Skill 版本信息')
+    .action(() => {
+      const exitCode = executeSkillVersion();
       process.exit(exitCode);
     });
 

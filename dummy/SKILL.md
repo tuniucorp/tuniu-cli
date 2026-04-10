@@ -29,7 +29,7 @@ npx tuniu-cli --version
 
 - **TUNIU_API_KEY**：途牛开放平台 API key，用于认证
 
-用户需在 [途牛开放平台](https://open.tuniu.com/mcp/login) 注册并获取上述密钥。
+用户需在 [途牛开放平台](https://open.tuniu.com/mcp) 注册并获取上述密钥。
 
 ```bash
 export TUNIU_API_KEY=your_api_key
@@ -82,8 +82,6 @@ tuniu call <server> <tool> -a '<JSON参数>'
 | `tuniu schema --output json` | 获取完整 Schema |
 | `tuniu discovery refresh && tuniu discovery list` | 检查新服务 |
 | `tuniu call ... -d` | 调试模式 |
-| `tuniu skill version` | 查看已安装 skill 版本 |
-| `tuniu skill install [--agent/--dir]` | 安装/更新 skill 到指定 Agent 或目录 |
 
 ---
 
@@ -101,20 +99,6 @@ tuniu discovery refresh && tuniu discovery list
 ```
 
 执行后重新检查服务列表，再决定下一步调用。若仍无法满足用户需求，才告知用户当前平台暂不支持该功能。
-
----
-
-## Skill 版本与更新说明
-
-`tuniu-cli` 提供 **skill** 子命令，用于维护本助手在各 AI Agent 目录下的安装与版本查看，与业务调用（`tuniu call`）相互独立。
-
-**使用场景简述**
-
-- **`tuniu skill version`**：在已配置多台 Agent（如 Cursor、Claude 等）时，检查各目录下已安装的 skill 版本、来源与安装时间；便于确认是否与文档站最新包一致。
-- **`tuniu skill install`**：需要**安装或更新**本 skill 时使用。默认仅写入 `~/.agents/skills/tuniu-cli/`；通过 `--agent` 可指定单个、多个（逗号分隔）或 `all`（全部内置支持的 Agent）；`--dir` 可额外指定自定义 skills 根目录。
-- **`npm install` / `npm ci`**：安装 `tuniu-cli` 时若启用脚本，**postinstall** 可能已根据本机存在的 Agent 父目录自动复制内置 skill；若需与线上一致或显式更新，仍建议执行 `tuniu skill install`。
-
-更完整的参数与示例见：`tuniu skill install --help`。
 
 ---
 
@@ -440,8 +424,6 @@ tuniu call cruise saveCruiseOrder -a '{"productId":"321648365","departureDate":"
 - 避免将“推荐/热门/受欢迎”等排序词写入 `keyWord`
 - 翻页时保持筛选条件不变，仅更新 `pageNum`
 
-**列表价格展示**：`searchHolidayList` 返回的 `price`、`starPrice` 等价为**起步价**。向用户展示时必须标注「起」（如 `¥38起`），不得写成确定价，避免误导。
-
 ```bash
 tuniu call holiday searchHolidayList -a '{"keyWord":"三亚","departsDateBegin":"2026-04-10","departsDateEnd":"2026-04-15"}'
 
@@ -529,7 +511,7 @@ stdout 输出 JSON 格式：
 | 103 | 参数错误 | 运行 `tuniu help <server> <tool>` |
 | 104 | 认证失败 | 检查 TUNIU_API_KEY |
 | 105 | 超时 | 使用 `-t 60` 增加超时 |
-| 108 | 未配置 API Key | 告知用户前往 [途牛开放平台](https://open.tuniu.com/mcp/login) 注册获取 API Key，并执行 `export TUNIU_API_KEY=your_api_key` |
+| 108 | 未配置 API Key | 设置 TUNIU_API_KEY |
 | 199 | 未知错误 | 使用 `-d` 调试模式 |
 
 ---
@@ -605,7 +587,7 @@ tuniu call holiday searchHolidayList -a '{"keyWord":"三亚","departsDateBegin":
 
 1. **密钥安全**：不要在回复或日志中暴露 TUNIU_API_KEY
 2. **PII 安全**：联系人姓名、手机号、乘客姓名、证件号仅在预订时发送至 MCP 服务，勿在日志或回复中暴露
-3. **认证**：若遇认证错误（退出码 104、108），必须告知用户前往 [途牛开放平台](https://open.tuniu.com/mcp/login) 注册获取 API Key，并提示设置 `TUNIU_API_KEY`
+3. **认证**：若遇认证错误（退出码 104、108），提示用户检查 TUNIU_API_KEY
 4. **日期格式**：所有日期均为 YYYY-MM-dd 或 yyyy-MM-dd
 5. **参数验证**：下单前必须先调用搜索/详情接口获取必需参数（如 cabinPriceId、productId、resId 等）
 6. **翻页**：各服务翻页参数不同，注意区分

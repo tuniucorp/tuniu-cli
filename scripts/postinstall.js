@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildBuiltinLocalMeta } from './skill-meta.mjs';
 
 const SKILL_NAME = 'tuniu-cli';
 
@@ -50,6 +51,23 @@ function sha256File(filePath) {
   return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
+function getCliVersion(packageRoot) {
+  const pkgPath = path.join(packageRoot, 'package.json');
+  try {
+    const raw = fs.readFileSync(pkgPath, 'utf8');
+    const pkg = JSON.parse(raw);
+    return typeof pkg.version === 'string' && pkg.version.trim() ? pkg.version : '0.0.0';
+  } catch {
+    return '0.0.0';
+  }
+}
+
+function writeSkillMeta(destDir, skillContent, cliVersion) {
+  const meta = buildBuiltinLocalMeta(skillContent, cliVersion);
+  const metaPath = path.join(destDir, '_meta.json');
+  fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2) + '\n');
+}
+
 /**
  * 发布包内应包含 scripts/.skill.sha256（由 prepack 生成）；与 SKILL.md 不一致则拒绝安装。
  * 开发克隆若未生成 manifest，仅告警并跳过校验，避免阻断本地 npm link。
@@ -77,6 +95,8 @@ function verifySkillIntegrity(skillSource) {
 function installSkillsToHomes() {
   const homeDir = os.homedir();
   const skillSource = getSkillSourcePath();
+  const packageRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const cliVersion = getCliVersion(packageRoot);
 
   // Check if SKILL.md exists
   if (!fs.existsSync(skillSource)) {
@@ -107,6 +127,8 @@ function installSkillsToHomes() {
 
       // Copy the SKILL.md file
       fs.copyFileSync(skillSource, destFile);
+      const skillContent = fs.readFileSync(destFile, 'utf8');
+      writeSkillMeta(destDir, skillContent, cliVersion);
       installed++;
       console.log(`tuniu-cli: Skill installed to ${destDir}`);
     } catch (error) {
@@ -122,11 +144,18 @@ function installSkillsToHomes() {
     try {
       fs.mkdirSync(defaultDir, { recursive: true });
       fs.copyFileSync(skillSource, destFile);
+      const skillContent = fs.readFileSync(destFile, 'utf8');
+      writeSkillMeta(defaultDir, skillContent, cliVersion);
       console.log(`tuniu-cli: Skill installed to ${defaultDir}`);
     } catch (error) {
       console.warn(`tuniu-cli: Failed to install to ${defaultDir}: ${error.message}`);
     }
   }
+
+  // 提示用户可以更新到最新版本
+  console.log('');
+  console.log('tuniu-cli: Skill 安装完成（来源: 内置文件）');
+  console.log('tuniu-cli: 如需更新到最新版本，请执行: tuniu skill install');
 }
 
 // Run the installation

@@ -61,7 +61,7 @@ npx tuniu-cli list
 | 条件 | 说明 |
 |------|------|
 | **运行环境** | Node.js 18+ |
-| **API Key** | 调用途牛服务前需配置 TUNIU_API_KEY，从 [途牛开放平台](https://open.tuniu.com/mcp/) 注册登录后申请 |
+| **API Key** | 调用途牛服务前需配置 TUNIU_API_KEY，从 [途牛开放平台](https://open.tuniu.com/mcp/login) 注册登录后申请 |
 | **网络** | 需能访问途牛服务端点（如 `https://openapi.tuniu.cn/mcp/hotel`） |
 
 ### 1.2 安装方式
@@ -141,7 +141,7 @@ tuniu skill install --dir ~/.custom-agent/skills
 
 ## 二、配置 CLI
 
-调用途牛服务需要配置 API Key。若您未注册使用过途牛服务，可前往 [途牛开放平台](https://open.tuniu.com/mcp/) 注册并登录账号，在控制台申请 API Key。将 API Key 配置到环境变量 `TUNIU_API_KEY` 中即可使用完整服务。可配置环境变量示例如下：
+调用途牛服务需要配置 API Key。若您未注册使用过途牛服务，可前往 [途牛开放平台](https://open.tuniu.com/mcp/login) 注册并登录账号，在控制台申请 API Key。将 API Key 配置到环境变量 `TUNIU_API_KEY` 中即可使用完整服务。可配置环境变量示例如下：
 
 | 变量 | 说明 | 示例 |
 |------|------|------|
@@ -296,7 +296,7 @@ tuniu call ticket create_ticket_order -a '{
 
 **Q1: 如何获取 API Key？**
 
-前往 [途牛开放平台](https://open.tuniu.com/mcp/) 注册并登录账号，获取 API Key。具体流程可参考平台文档或联系项目负责人。
+前往 [途牛开放平台](https://open.tuniu.com/mcp/login) 注册并登录账号，获取 API Key。具体流程可参考平台文档或联系项目负责人。
 
 **Q2: 提示「未配置 API Key」怎么办？**
 

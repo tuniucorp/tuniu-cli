@@ -141,13 +141,13 @@ export class ApiKeyRequiredError extends McpCliError {
   override readonly errorType = 'ApiKeyRequiredError';
 
   constructor(
-    message = '需要配置 API Key 才能访问途牛 MCP 服务，可以前往途牛开放平台 https://open.tuniu.com/mcp/ 获取 API Key',
+    message = '需要配置 API Key 才能访问途牛 MCP 服务，可以前往途牛开放平台 https://open.tuniu.com/mcp/login 获取 API Key',
     details?: Record<string, unknown>,
   ) {
     const errorDetails = { ...details };
     if (!errorDetails.hint) {
       errorDetails.hint =
-        '请设置 TUNIU_API_KEY 环境变量获取 API Key，例如: export TUNIU_API_KEY=your_api_key，可以前往途牛开放平台 https://open.tuniu.com/mcp/ 注册登录获取 API Key';
+        '请设置 TUNIU_API_KEY 环境变量获取 API Key，例如: export TUNIU_API_KEY=your_api_key，可以前往途牛开放平台 https://open.tuniu.com/mcp/login 注册登录获取 API Key';
     }
     super(message, errorDetails);
   }
